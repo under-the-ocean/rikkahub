@@ -54,8 +54,12 @@ import kotlin.uuid.Uuid
 private const val TAG = "GenerationHandler"
 private const val MAX_TOOL_OUTPUT_CHARS = 32 * 1024
 private const val TOOL_OUTPUT_PREVIEW_CHARS = 4 * 1024
-private const val MAX_PROVIDER_NETWORK_RETRIES = 3
+/** 网络重试指数退避的起始延迟（1s/2s/4s/...），由 NetworkSetting.autoRetryCount 决定总次数 */
 private const val INITIAL_PROVIDER_RETRY_DELAY_MS = 1_000L
+/** 网络重试指数退避达到封顶所需的位移次数（1s << 6 = 64s > 60s） */
+private const val MAX_PROVIDER_RETRY_DELAY_SHIFT = 6
+/** 网络重试延迟上限，防止无限重试时退避时间无限增长 */
+private const val MAX_PROVIDER_RETRY_DELAY_MS = 60_000L
 
 private class StreamChunkHandlingException(cause: Throwable) : RuntimeException(cause)
 
@@ -450,6 +454,7 @@ class GenerationLoop(
                             retryCount = retryCount,
                             processingStatus = processingStatus,
                             enabled = settings.networkSetting.enableAutoRetry,
+                            maxRetries = settings.networkSetting.autoRetryCount,
                         )
                     }
                 }
@@ -457,6 +462,7 @@ class GenerationLoop(
                 val result = executeProviderRequestWithRetry(
                     processingStatus = processingStatus,
                     enabled = settings.networkSetting.enableAutoRetry,
+                    maxRetries = settings.networkSetting.autoRetryCount,
                 ) {
                     providerImpl.generateText(
                         providerSetting = provider,
@@ -475,6 +481,7 @@ class GenerationLoop(
     private suspend fun <T> executeProviderRequestWithRetry(
         processingStatus: MutableStateFlow<String?>,
         enabled: Boolean,
+        maxRetries: Int,
         block: suspend () -> T,
     ): T {
         var retryCount = 0
@@ -487,6 +494,7 @@ class GenerationLoop(
                     retryCount = retryCount,
                     processingStatus = processingStatus,
                     enabled = enabled,
+                    maxRetries = maxRetries,
                 )
             }
         }
@@ -497,26 +505,42 @@ class GenerationLoop(
         retryCount: Int,
         processingStatus: MutableStateFlow<String?>,
         enabled: Boolean,
+        maxRetries: Int,
     ): Int {
         // 用户主动停止生成时，底层连接也可能以 IOException("canceled") 收尾；
         // 先检查协程状态，确保取消不会被当作网络波动重新拉起。
         currentCoroutineContext().ensureActive()
-        if (!enabled || error !is IOException || retryCount >= MAX_PROVIDER_NETWORK_RETRIES) {
+        // maxRetries < 0 表示无限重试；否则达到上限后不再重试，直接抛出。
+        val retriesExhausted = maxRetries >= 0 && retryCount >= maxRetries
+        if (!enabled || error !is IOException || retriesExhausted) {
             throw error
         }
 
         val nextRetryCount = retryCount + 1
-        val retryDelay = INITIAL_PROVIDER_RETRY_DELAY_MS shl retryCount
-        processingStatus.value = context.getString(
-            R.string.chat_generation_network_retrying,
-            getNetworkErrorMessage(error),
-            nextRetryCount,
-            MAX_PROVIDER_NETWORK_RETRIES,
-        )
+        // 指数退避（1s/2s/4s/...），封顶 60s，避免无限重试时延迟无限增长。
+        val retryDelay = if (retryCount >= MAX_PROVIDER_RETRY_DELAY_SHIFT) {
+            MAX_PROVIDER_RETRY_DELAY_MS
+        } else {
+            INITIAL_PROVIDER_RETRY_DELAY_MS shl retryCount
+        }
+        processingStatus.value = if (maxRetries < 0) {
+            context.getString(
+                R.string.chat_generation_network_retrying_unlimited,
+                getNetworkErrorMessage(error),
+                nextRetryCount,
+            )
+        } else {
+            context.getString(
+                R.string.chat_generation_network_retrying,
+                getNetworkErrorMessage(error),
+                nextRetryCount,
+                maxRetries,
+            )
+        }
         Log.w(
             TAG,
             "Provider connection failed, retrying in ${retryDelay}ms " +
-                    "($nextRetryCount/$MAX_PROVIDER_NETWORK_RETRIES)",
+                    "($nextRetryCount/${if (maxRetries < 0) "∞" else maxRetries})",
             error,
         )
         delay(retryDelay)

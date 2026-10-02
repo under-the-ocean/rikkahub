@@ -974,7 +974,11 @@
   <string name="setting_page_preferences_general_desc">سلوك التفاعل، التمرير، إعدادات الإدخال</string>
   <string name="setting_page_preferences_network">الشبكة</string>
   <string name="setting_page_preferences_network_auto_retry">إعادة المحاولة التلقائية</string>
-  <string name="setting_page_preferences_network_auto_retry_desc">إعادة محاولة طلبات النموذج حتى 3 مرات عند حدوث أخطاء الشبكة.</string>
+  <string name="setting_page_preferences_network_auto_retry_desc">إعادة محاولة طلبات النموذج تلقائيًا عند حدوث أخطاء الشبكة.</string>
+  <string name="setting_page_preferences_network_auto_retry_count">عدد مرات إعادة المحاولة</string>
+  <string name="setting_page_preferences_network_auto_retry_count_desc">الحد الأقصى لعدد مرات إعادة المحاولة بعد خطأ الشبكة. اختر «غير محدود» للمتابعة حتى النجاح أو الإيقاف اليدوي.</string>
+  <string name="setting_page_preferences_network_auto_retry_count_unlimited">غير محدود</string>
+  <string name="chat_generation_network_retrying_unlimited">%1$s. إعادة المحاولة (%2$d/∞)…</string>
   <string name="setting_page_preferences_network_desc">إعدادات User-Agent وطلبات الشبكة</string>
   <string name="setting_page_preferences_network_proxy">الوكيل</string>
   <string name="setting_page_preferences_network_proxy_desc">يدعم عناوين URL لوكيل HTTP و SOCKS5. اتركه فارغًا لاستخدام إعدادات النظام.</string>

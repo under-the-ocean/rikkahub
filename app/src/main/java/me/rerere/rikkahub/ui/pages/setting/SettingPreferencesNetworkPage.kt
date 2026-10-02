@@ -19,6 +19,9 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.LargeFlexibleTopAppBar
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
@@ -63,6 +66,8 @@ import java.io.IOException
 import java.util.concurrent.TimeUnit
 
 private const val PROXY_TEST_URL = "https://www.google.com/generate_204"
+/** NetworkSetting.autoRetryCount 中表示无限重试的取值 */
+private const val UNLIMITED_RETRIES = -1
 
 @Composable
 fun SettingPreferencesNetworkPage(vm: SettingVM = koinViewModel()) {
@@ -300,6 +305,53 @@ fun SettingPreferencesNetworkPage(vm: SettingVM = koinViewModel()) {
                                     )
                                 },
                             )
+                        },
+                    )
+                }
+            }
+            item {
+                CardGroup(
+                    modifier = Modifier.padding(horizontal = 8.dp),
+                    title = {
+                        Text(stringResource(R.string.setting_page_preferences_network_auto_retry_count))
+                    },
+                ) {
+                    item(
+                        headlineContent = {
+                            Text(stringResource(R.string.setting_page_preferences_network_auto_retry_count_desc))
+                        },
+                    )
+                    item(
+                        headlineContent = {
+                            SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+                                val retryOptions = listOf(3, 5, 10, UNLIMITED_RETRIES)
+                                retryOptions.forEachIndexed { index, retryCount ->
+                                    SegmentedButton(
+                                        shape = SegmentedButtonDefaults.itemShape(index, retryOptions.size),
+                                        onClick = {
+                                            vm.updateSettings(
+                                                settings.copy(
+                                                    networkSetting = settings.networkSetting.copy(
+                                                        autoRetryCount = retryCount,
+                                                    ),
+                                                )
+                                            )
+                                        },
+                                        selected = settings.networkSetting.autoRetryCount == retryCount,
+                                        enabled = settings.networkSetting.enableAutoRetry,
+                                    ) {
+                                        Text(
+                                            if (retryCount == UNLIMITED_RETRIES) {
+                                                stringResource(
+                                                    R.string.setting_page_preferences_network_auto_retry_count_unlimited
+                                                )
+                                            } else {
+                                                retryCount.toString()
+                                            }
+                                        )
+                                    }
+                                }
+                            }
                         },
                     )
                 }

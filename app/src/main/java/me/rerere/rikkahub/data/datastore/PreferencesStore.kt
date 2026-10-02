@@ -623,6 +623,8 @@ data class NetworkSetting(
     val proxyUsername: String = "",
     val proxyPassword: String = "",
     val enableAutoRetry: Boolean = true,
+    // 网络错误自动重试次数，-1 表示无限重试（直到成功或手动停止）
+    val autoRetryCount: Int = 3,
 )
 
 @Serializable

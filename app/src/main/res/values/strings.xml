@@ -857,7 +857,7 @@
   <string name="setting_page_preferences_network_proxy_desc">Supports HTTP and SOCKS5 proxy URLs. Leave blank to use system settings.</string>
   <string name="setting_page_preferences_network_proxy_invalid">Enter a valid proxy URL with a host and port.</string>
   <string name="setting_page_preferences_network_auto_retry">Automatic retry</string>
-  <string name="setting_page_preferences_network_auto_retry_desc">Retry model requests up to 3 times when network errors occur.</string>
+  <string name="setting_page_preferences_network_auto_retry_desc">Automatically retry model requests when network errors occur.</string>
   <string name="setting_page_documentation">Documentation</string>
   <string name="setting_page_documentation_desc">View app usage instructions and help documentation</string>
   <string name="setting_page_donate">Donate</string>
@@ -1403,4 +1403,8 @@
   <string name="error_fast_model_not_found">Fast model not found. Please select one in settings.</string>
   <string name="error_fast_model_provider_not_found">Provider of the fast model not found</string>
   <string name="assistant_page_clone_with_memories">Also copy memories</string>
+  <string name="setting_page_preferences_network_auto_retry_count">Auto retry count</string>
+  <string name="setting_page_preferences_network_auto_retry_count_desc">Maximum retries after a network error. Choose unlimited to keep retrying until it succeeds or you stop it.</string>
+  <string name="setting_page_preferences_network_auto_retry_count_unlimited">Unlimited</string>
+  <string name="chat_generation_network_retrying_unlimited">%1$s. Retrying (%2$d/∞)…</string>
 </resources>
